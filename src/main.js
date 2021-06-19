@@ -1,12 +1,9 @@
 import Vue from 'vue'
-import App from './core/GameScreen.vue'
-import Vant from 'vant';
-import VCharts from 'v-charts'
-import 'vant/lib/index.css';
+import App from './MainPage.vue'
+import ElementUI from 'element-ui';
+import 'element-ui/lib/theme-chalk/index.css'
 
-Vue.use(VCharts);
-Vue.use(Vant);
-Vue.config.productionTip = false
+Vue.use(ElementUI);
 
 new Vue({
   render: h => h(App),
