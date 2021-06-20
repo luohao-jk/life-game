@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "element-ui": "^2.15.2",
+    "js-base64": "^3.6.1",
+    "pako": "^2.0.3",
     "vue": "^2.6.11"
   },
   "devDependencies": {

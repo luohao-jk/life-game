@@ -30,28 +30,52 @@ export default class GameController {
             return;
         }
         this.reCalculateMap = new Map();
-        let data = this.gameData.aliveCellsMap;
+        let lastIterationChangedCells = this.gameData.lastIterationChangedCells;
         let newData = new Map();
-        for (let [, {x, y}] of data) {
-            this.isAliveInNextTime(x - 1, y - 1) && this.setCell(x - 1, y - 1, newData);
-            this.isAliveInNextTime(x - 1, y) && this.setCell(x - 1, y, newData);
-            this.isAliveInNextTime(x - 1, y + 1) && this.setCell(x - 1, y + 1, newData);
-            this.isAliveInNextTime(x, y - 1) && this.setCell(x, y - 1, newData);
-            this.isAliveInNextTime(x, y) && this.setCell(x, y, newData);
-            this.isAliveInNextTime(x, y + 1) && this.setCell(x, y + 1, newData);
-            this.isAliveInNextTime(x + 1, y - 1) && this.setCell(x + 1, y - 1, newData);
-            this.isAliveInNextTime(x + 1, y) && this.setCell(x + 1, y, newData);
-            this.isAliveInNextTime(x + 1, y + 1) && this.setCell(x + 1, y + 1, newData);
+        let currentIterationChangedCells = [];
+        for (let cell of lastIterationChangedCells) {
+            let x = cell.x;
+            let y = cell.y;
+            this.calculateCell(x - 1, y - 1, newData, currentIterationChangedCells);
+            this.calculateCell(x - 1, y, newData, currentIterationChangedCells);
+            this.calculateCell(x - 1, y + 1, newData, currentIterationChangedCells);
+            this.calculateCell(x , y - 1, newData, currentIterationChangedCells);
+            this.calculateCell(x, y, newData, currentIterationChangedCells);
+            this.calculateCell(x, y + 1, newData, currentIterationChangedCells);
+            this.calculateCell(x + 1, y - 1, newData, currentIterationChangedCells);
+            this.calculateCell(x + 1, y, newData, currentIterationChangedCells);
+            this.calculateCell(x + 1, y + 1, newData, currentIterationChangedCells);
+        }
+        for (let [key, value] of this.gameData.aliveCellsMap) {
+            if (!this.reCalculateMap.has(key)) {
+                newData.set(key, value);
+            }
         }
         this.gameData.aliveCellsMap = newData;
+        this.gameData.lastIterationChangedCells = currentIterationChangedCells;
         this.putHumanAliveCache();
     }
 
-    isAliveInNextTime(x, y) {
+    calculateCell(x, y, newData, currentIterationChangedCells) {
         let key = x * 100000000 + y;
         if (this.reCalculateMap.has(key)) {
-            return this.reCalculateMap.get(key);
+            return;
         }
+        this.reCalculateMap.set(key, 1);
+
+        if (this.isAliveInNextTime(x, y)) {
+            this.setCell(x , y , newData);
+            if (!this.gameData.hasAliveCell(x, y)) {
+                currentIterationChangedCells.push({x, y});
+            }
+        } else {
+            if (this.gameData.hasAliveCell(x, y)) {
+                currentIterationChangedCells.push({x, y});
+            }
+        }
+    }
+
+    isAliveInNextTime(x, y) {
         let count = 0;
         this.gameData.hasAliveCell(x - 1, y - 1) && count++;
         this.gameData.hasAliveCell(x - 1, y) && count++;
@@ -64,12 +88,10 @@ export default class GameController {
 
         //活细胞傍边不是2或3个活细胞，则死亡
         if (this.gameData.hasAliveCell(x, y)) {
-            this.reCalculateMap.set(key, count === 2 || count === 3);
             return count === 2 || count === 3;
         }
 
         //死细胞周围有三个活细胞时，则新生
-        this.reCalculateMap.set(key, count === 3);
         return count === 3;
     }
 
@@ -85,6 +107,7 @@ export default class GameController {
             } else {
                 this.setCell(x, y, this.gameData.aliveCellsMap);
             }
+            this.gameData.lastIterationChangedCells.push({x, y});
         }
         this.gameData.humanSetStateCacheArray.splice(0, this.gameData.humanSetStateCacheArray.length);
     }
@@ -112,7 +135,7 @@ export default class GameController {
             }
         });
 
-        window.document.body.addEventListener("mouseup", (event) => {
+        this.gameScreen.getCanvas().addEventListener("mouseup", (event) => {
             let cellSize = this.gameData.options.cellSize;
             let canvas = this.gameScreen.getCanvas();
             let lookAt = this.gameData.options.lookAt;
@@ -146,7 +169,7 @@ export default class GameController {
             }
         });
 
-        window.document.body.addEventListener("mousemove", (event) => {
+        this.gameScreen.getCanvas().addEventListener("mousemove", (event) => {
             let cellSize = this.gameData.options.cellSize;
             let canvas = this.gameScreen.getCanvas();
             let lookAt = this.gameData.options.lookAt;

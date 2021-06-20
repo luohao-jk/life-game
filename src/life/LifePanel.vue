@@ -2,7 +2,9 @@
     <div style="display: inline-block; text-align: center">
         <div ref="panel" @click="select">
         </div>
+        <span style="color: deepskyblue; cursor: pointer;margin-right: 10px" @click="flip">镜像</span>
         <span style="color: deepskyblue; cursor: pointer" @click="rotate">旋转</span>
+        <span style="color: deepskyblue; cursor: pointer; margin-left: 10px" @click="deleteShape" v-if="deletable">删除</span>
     </div>
 </template>
 
@@ -20,6 +22,10 @@
                 type: Number,
                 default: 100,
             },
+            deletable: {
+                type: Boolean,
+                default: false,
+            }
         },
         data() {
             return {
@@ -53,6 +59,22 @@
                 }
                 this.draw();
             },
+
+            flip() {
+                let newMatrix = [];
+                for (let y = 0; y < this.matrix.length; y++) {
+                    newMatrix[y] = [];
+                    for (let x = 0; x < this.matrix[y].length; x++) {
+                        newMatrix[y][this.matrix[y].length - x - 1] = this.matrix[y][x];
+                    }
+                }
+                this.matrix.splice(0, this.matrix.length);
+                for (let i = 0; i < newMatrix.length; i++) {
+                    this.matrix[i] = newMatrix[i];
+                }
+                this.draw();
+            },
+
             draw() {
                 let ctx = this.canvas.getContext("2d");
                 let matrixWidthLen = 0;
@@ -84,6 +106,9 @@
             },
             select() {
                 this.$emit("click", this.matrix);
+            },
+            deleteShape() {
+                this.$emit("delete");
             }
         }
     }
